@@ -123,6 +123,9 @@ for(wave in waveforms){
                    std.trials = list.mat.to.vec(std.trials),
                    wave=wave)
   
+  df$gm.stim <- df$gm.stim == 'WM'
+  df$gm.rec <- df$gm.rec == 'WM'
+  
   df$soz.non.sz <- ifelse(df$soz.stim == 'Non-SOZ' & df$soz.rec == 'Non-SOZ',yes = 'Outside',no='Inside')
   df$soz.stim.rec <- paste0(df$soz.stim,' -> ',df$soz.rec)
   df$rho <- fisher.r.to.z(df$rho)
@@ -132,6 +135,16 @@ for(wave in waveforms){
   
   df$Amygdala.Stim <- df$BN.stim %in% c(211:214) | df$stim.name.ana == 'AM'
   df$Amygdala.Rec <- df$BN.rec %in% c(211:214) | df$rec.name.ana == 'AM'
+  
+  df$Motor.Stim <- df$BN.stim %in% c(53:64) | df$stim.name.ana == 'precentral'
+  df$Motor.Rec <- df$BN.rec %in% c(53:64) | df$rec.name.ana == 'precentral'
+  
+  df$Somatosensory.Stim <- df$BN.stim %in% c(155:162) | df$stim.name.ana == 'postcentral'
+  df$Somatosensory.Rec <- df$BN.rec %in% c(155:162) | df$rec.name.ana == 'postcentral'  
+  
+  df$Visual.Stim <- df$BN.stim %in% c(189:210) | df$stim.name.ana == 'occipital'
+  df$Visual.Rec <- df$BN.rec %in% c(189:210) | df$rec.name.ana == 'occipital'    
+  
   
   # make null
   if(wave != 'PreStim'){
@@ -181,38 +194,38 @@ for(wave in waveforms){
     #df.plt.pt$spikes.stim <- rank_INT(df.plt.pt$spikes.stim)
     if(nrow(df.plt.pt)>0 & !all(is.na(df.plt.pt$spikes.rec))){
       
-      m.rho.spikes.stim <- lm(spikes.stim~log10(D)+gm.stim+gm.rec+rho ,data=df.plt.pt)
+      m.rho.spikes.stim <- lm(spikes.stim~log10(D)+gm.stim+gm.rec+Somatosensory.Stim+Somatosensory.Rec+Motor.Stim+Motor.Rec+Visual.Stim+Visual.Rec+rho ,data=df.plt.pt)
 
       results.stim$p[[wave]]$rho.spikes[[pt]] <- get.coef.p.val(m.rho.spikes.stim,'rho')
       results.stim$b[[wave]]$rho.spikes[[pt]] <- get.coef.beta(m.rho.spikes.stim,'rho')
       results.stim$m[[wave]]$rho.spikes[[pt]] <- m.rho.spikes.stim
       results.perm.stim$p[[wave]]$rho.spikes[[pt]] <- lm.perm.null.df.list(m.rho.spikes.stim,df.null.stim.pt,coef.names)['rho']
       
-      m.rho.spikes.rec <- lm(spikes.rec~log10(D)+gm.stim+gm.rec+rho,data=df.plt.pt)
+      m.rho.spikes.rec <- lm(spikes.rec~log10(D)+gm.stim+gm.rec+Somatosensory.Stim+Somatosensory.Rec+Motor.Stim+Motor.Rec+Visual.Stim+Visual.Rec+rho,data=df.plt.pt)
       results.rec$p[[wave]]$rho.spikes[[pt]] <- get.coef.p.val(m.rho.spikes.rec,'rho')
       results.rec$b[[wave]]$rho.spikes[[pt]] <- get.coef.beta(m.rho.spikes.rec,'rho')
       results.rec$m[[wave]]$rho.spikes[[pt]] <- m.rho.spikes.rec
       results.perm.rec$p[[wave]]$rho.spikes[[pt]] <- lm.perm.null.df.list(m.rho.spikes.rec,df.null.rec.pt,coef.names)['rho']
       
-      m.ccep.spikes.rec <- lm(spikes.rec~log10(D)+gm.stim+gm.rec+log10(ccep),data=df.plt.pt)
+      m.ccep.spikes.rec <- lm(spikes.rec~log10(D)+gm.stim+gm.rec+Somatosensory.Stim+Somatosensory.Rec+Motor.Stim+Motor.Rec+Visual.Stim+Visual.Rec+log10(ccep),data=df.plt.pt)
       results.rec$p[[wave]]$ccep.spikes[[pt]] <- get.coef.p.val(m.ccep.spikes.rec,'log10(ccep)')
       results.rec$b[[wave]]$ccep.spikes[[pt]] <- get.coef.beta(m.ccep.spikes.rec,'log10(ccep)')
       results.rec$m[[wave]]$ccep.spikes[[pt]] <- m.ccep.spikes.rec
       results.perm.rec$p[[wave]]$ccep.spikes[[pt]] <- lm.perm.null.df.list(m.ccep.spikes.rec,df.null.rec.pt,coef.names)['log10(ccep)']
       
-      m.ccep.spikes.stim <- lm(spikes.stim~log10(D)+gm.stim+gm.rec+log10(ccep),data=df.plt.pt)
+      m.ccep.spikes.stim <- lm(spikes.stim~log10(D)+gm.stim+gm.rec+Somatosensory.Stim+Somatosensory.Rec+Motor.Stim+Motor.Rec+Visual.Stim+Visual.Rec+log10(ccep),data=df.plt.pt)
       results.stim$p[[wave]]$ccep.spikes[[pt]] <- get.coef.p.val(m.ccep.spikes.stim,'log10(ccep)')
       results.stim$b[[wave]]$ccep.spikes[[pt]] <- get.coef.beta(m.ccep.spikes.stim,'log10(ccep)')
       results.stim$m[[wave]]$ccep.spikes[[pt]] <- m.ccep.spikes.stim
       results.perm.stim$p[[wave]]$ccep.spikes[[pt]] <- lm.perm.null.df.list(m.ccep.spikes.stim,df.null.stim.pt,coef.names)['log10(ccep)']
       
-      m.std.spikes.stim <- lm(spikes.stim~log10(std.trials)+log10(D)+gm.stim+gm.rec,data=df.plt.pt)
+      m.std.spikes.stim <- lm(spikes.stim~log10(D)+gm.stim+gm.rec+Somatosensory.Stim+Somatosensory.Rec+Motor.Stim+Motor.Rec+Visual.Stim+Visual.Rec+log10(std.trials),data=df.plt.pt)
       results.stim$p[[wave]]$std.spikes[[pt]] <- get.coef.p.val(m.std.spikes.stim,'log10(std.trials)')
       results.stim$b[[wave]]$std.spikes[[pt]] <- get.coef.beta(m.std.spikes.stim,'log10(std.trials)')
       results.stim$m[[wave]]$std.spikes[[pt]] <- m.std.spikes.stim
       results.perm.stim$p[[wave]]$std.spikes[[pt]] <- lm.perm.null.df.list(m.std.spikes.stim,df.null.stim.pt,coef.names)['log10(std.trials)']
 
-      m.std.spikes.rec<- lm(spikes.rec~log10(std.trials)+log10(D)+gm.stim+gm.rec,data=df.plt.pt)      
+      m.std.spikes.rec<- lm(spikes.rec~log10(D)+gm.stim+gm.rec+Somatosensory.Stim+Somatosensory.Rec+Motor.Stim+Motor.Rec+Visual.Stim+Visual.Rec+log10(std.trials),data=df.plt.pt)      
       results.rec$p[[wave]]$std.spikes[[pt]] <- get.coef.p.val(m.std.spikes.rec,'log10(std.trials)')
       results.rec$b[[wave]]$std.spikes[[pt]] <- get.coef.beta(m.std.spikes.rec,'log10(std.trials)')
       results.rec$m[[wave]]$std.spikes[[pt]] <- m.std.spikes.rec
@@ -316,7 +329,7 @@ for(cfg in plot.cfg){
             legend.key.size = unit(0.1,'cm'),
             legend.title = element_blank(),
             axis.title.x = element_blank())
-    ggsave(plot = p[[wave]][[cfg$ttl]],filename = paste0(savedir,cfg$ttl,wave,'.pdf'),width = 3,height=4,units= 'cm',useDingbats=FALSE)
+    ggsave(plot = p[[wave]][[cfg$ttl]],filename = paste0(savedir,cfg$ttl,wave,'_FunctionControl.pdf'),width = 3,height=4,units= 'cm',useDingbats=FALSE)
     
   }
 }
@@ -325,4 +338,100 @@ p.all <- plot_grid(plotlist=list(p$N1$CCEPVsSpikes,p$N2$CCEPVsSpikes,
                                  p$N1$RhoVsSpikes,p$N2$RhoVsSpikes,
                                  p$N1$StdVsSpikes,p$N2$StdVsSpikes),
                    align='hv',ncol=2)
-ggsave(plot = p.all,filename = paste0(savedir,'Fig5fgh.pdf'),width = 8.75,height=10,units= 'cm',useDingbats=FALSE)
+ggsave(plot = p.all,filename = paste0(savedir,'Fig5fgh_FunctionControl.pdf'),width = 8.75,height=10,units= 'cm',useDingbats=FALSE)
+
+p.list <- list()
+# combine stim and record results into one list
+results.stim.rec <- list()
+results.stim.rec[['Stim']] <- results.stim
+results.stim.rec[['Rec']] <- results.rec
+
+nice.coef.names <- c(`log10(D)`='log10(D)',gm.stimTRUE="WM Stim",gm.recTRUE='WM Rec',Somatosensory.StimTRUE='SOM Stim',
+                     Somatosensory.RecTRUE='SOM Rec',Motor.StimTRUE='MOT Stim',Motor.RecTRUE='MOT Rec',
+                     Visual.StimTRUE='VIS Stim',Visual.RecTRUE='VIS Rec',
+                     `log10(std.trials)`='log10(Std.)',
+                     rho='Rho',
+                     `log10(ccep)`='log10(Amp.)')
+
+for(wave in waveforms){
+  for(stim.rec in c('Stim','Rec')){
+    for(cfg in plot.cfg){
+    
+      # calculate standardized betas for plot
+      std.beta <- lapply(results.stim.rec[[stim.rec]]$m[[wave]][[cfg$m.name]],lm.beta)
+      rsq.beta <- sapply(results.stim.rec[[stim.rec]]$m[[wave]][[cfg$m.name]],get.model.rsq)
+      
+      #m.vif <- lapply(results.stim.rec[[stim.rec]]$m[[wave]][[cfg$m.name]],vif)
+      
+      #results.stim.rec[[stim.rec]]$m[[wave]][[cfg$m.name]]$HUP211$model
+      
+      # extract betas and p-values for all subjects and all coefficients in one matrix
+      b.matrix <- sapply(std.beta,get.lm.std.betas)[-1,]
+      p.matrix <- sapply(std.beta,get.lm.p.vals)[-1,]
+      print(cbind(rsq.beta-colSums(b.matrix^2,na.rm=T)))
+      # give coefficients nice names for plot
+      rownames(b.matrix) <- unname(nice.coef.names[rownames(b.matrix)])
+      rownames(p.matrix) <- unname(nice.coef.names[rownames(p.matrix)])
+      # correct p values for each coefficient across patient
+      p.adj.matrix <- t(sapply(rownames(p.matrix),function(var) p.adjust(p.matrix[var,],method='fdr')))
+      # make p-values into * code for significance level
+      p.matrix <- p.signif.matrix(p.adj.matrix,ns=' ')
+      # make heatmap plot of betas with overlayed asterisk
+      p.list[[wave]][[cfg$m.name]] <- imagesc(X=b.matrix,ttl = paste0(wave,': ',cfg$ttl),
+              overlay = p.matrix, # rotate text
+              overlay.text.col = 'white',
+              overlay.text.sz = 2.5,
+              overlay.text.angle = 90,
+              overlay.text.vjust = 1,
+              cmap = 'redblue_asymmetric_nagrey',
+              caxis_name = expression(beta),
+              clim = c(-0.5,0.5)) + 
+        standard_plot_addon() + x_text_90() + nice_cbar()
+    }
+  p.all <- plot_grid(plotlist=list(p.list[[wave]]$ccep,
+                                   p.list[[wave]]$rho,
+                                   p.list[[wave]]$std),
+                     align='hv',ncol=3)
+  ggsave(plot = p.all,filename = paste0(savedir,'Fig5fghBetas',wave,stim.rec,'.pdf'),width = 18,height=6,units= 'cm',useDingbats=FALSE)
+  }
+}
+
+save(results.stim.rec,file=paste0(savedir,'Fig5fghSpikeModels.RData'))
+
+##############################
+### Make regression tables ###
+##############################
+
+pts <- names(results.stim.rec[[stim.rec]]$m[[wave]]$rho)
+for(wave in waveforms){
+  for(stim.rec in c('Stim','Rec')){
+      
+    # Get matrix of FDR corrected p values
+    reg.tab.rho <- reg.tab.ccep <- reg.tab.std <- list()
+    p.matrix <- sapply(results.stim.rec[[stim.rec]]$m[[wave]]$rho,get.lm.p.vals)
+    p.adj.matrix.rho <- t(sapply(rownames(p.matrix),function(var) p.adjust(p.matrix[var,],method='fdr')))
+    p.matrix <- sapply(results.stim.rec[[stim.rec]]$m[[wave]]$ccep,get.lm.p.vals)
+    p.adj.matrix.ccep <- t(sapply(rownames(p.matrix),function(var) p.adjust(p.matrix[var,],method='fdr')))
+    p.matrix <- sapply(results.stim.rec[[stim.rec]]$m[[wave]]$std,get.lm.p.vals)
+    p.adj.matrix.std <- t(sapply(rownames(p.matrix),function(var) p.adjust(p.matrix[var,],method='fdr')))
+    
+      for(pt in pts){
+        
+        reg.tab.rho[[pt]] <- assemble.reg.tab.5fgh(results.stim.rec[[stim.rec]]$m[[wave]]$rho[[pt]],'Rho',pt,wave,p.adj.matrix.rho,stim.rec)
+        reg.tab.rho[[pt]] <- cbind(reg.tab.rho[[pt]],'') # add blank row to horizontally concatenate
+        reg.tab.ccep[[pt]] <- assemble.reg.tab.5fgh(results.stim.rec[[stim.rec]]$m[[wave]]$ccep[[pt]],'CCEP Amplitude',pt,wave,p.adj.matrix.ccep,stim.rec)
+        reg.tab.ccep[[pt]] <- cbind(reg.tab.ccep[[pt]],'') # add blank row to horizontally concatenate
+        reg.tab.std[[pt]] <- assemble.reg.tab.5fgh(results.stim.rec[[stim.rec]]$m[[wave]]$std[[pt]],'CCEP Amplitude Standard Deviation',pt,wave,p.adj.matrix.std,stim.rec)
+        reg.tab.std[[pt]] <- cbind(reg.tab.std[[pt]],'') # add blank row to horizontally concatenate
+        
+      }
+  
+    reg.tab.rho <- do.call(cbind,reg.tab.rho)
+    write.table(reg.tab.rho,file = paste0(savedir,'RegressionTable_',wave,'RhoSpikes_Fig5def_',stim.rec,'.csv'),row.names = F,col.names = F,sep=',')
+    reg.tab.ccep <- do.call(cbind,reg.tab.ccep)
+    write.table(reg.tab.ccep,file = paste0(savedir,'RegressionTable_',wave,'CCEPAmplitudeSpikes_Fig5def_',stim.rec,'.csv'),row.names = F,col.names = F,sep=',')
+    reg.tab.std <- do.call(cbind,reg.tab.std)
+    write.table(reg.tab.std,file = paste0(savedir,'RegressionTable_',wave,'CCEPStandardDeviationSpikes_Fig5def_',stim.rec,'.csv'),row.names = F,col.names = F,sep=',')
+  }
+}
+

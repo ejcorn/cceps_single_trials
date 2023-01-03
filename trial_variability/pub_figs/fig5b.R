@@ -133,8 +133,12 @@ for(wave in waveforms){
 
 # count non-artifactual CCEPs we measured - you can't analyze a CCEP where either N1 or N2 is 0 (b/c findpeaks couldn't find peak)
 # but, the total number of nonartifactual CCEPs is greater than the CCEPs we analyzed (almost double) 
+# Right now our code is written such that 0's come from either subthreshold CCEPS OR when findpeaks can't find a peak
+
 count.nonartifact.cceps <- sum(df.all$N1$ccep >0 | df.all$N2$ccep>0,na.rm=T)
 count.analyzed.cceps <- sum(df.all$N1$ccep >0 & df.all$N2$ccep>0,na.rm=T)
+
+# count.analyzed.cceps <- sum(!is.na(df.all$N1$ccep) & !is.na(df.all$N2$ccep>0)) # includes CCEP == 0, which is about 40k CCEPs
 
 Intra.SOZ.CCEPs <- lapply(df.all, function(X) X[X$soz.stim.rec == 'SOZ -> SOZ' & !is.na(X$ccep),])
 Intra.SOZ.CCEPs <- lapply(df.all, function(X) X[X$soz.stim.rec == 'SOZ -> SOZ' & !is.na(X$ccep) & X$ccep!=0,])

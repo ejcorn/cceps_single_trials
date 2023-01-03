@@ -49,7 +49,7 @@ for(pl in plot.list){
   
   waveforms <- names(clcorr.results)
   df.all <- list()
-  wave <- 'N2'
+  wave <- 'N1'
   for(wave in waveforms){
     
     # unpack mat struct
@@ -86,9 +86,7 @@ for(pl in plot.list){
       
     }
     # get distribution of phase-waveform correlations concatenated across all patients
-    
-
-    
+  
     # remove undetectable CCEPs
     df.plt <- df.plt[!is.na(df.plt$r),]
     df.plt$wave <- wave

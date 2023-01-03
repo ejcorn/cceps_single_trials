@@ -23,7 +23,8 @@ pts <- name(names(elec.info))
 
 waveforms <- names(spear.results)
 df.all <- list()
-pct.sig.elecs.per.pt <- list() # count number of RECORDING electrodes with significant effects per patient for each wave
+pct.sig.elecs.per.pt <- ct.sig.elecs.all.pts <- list() # count number of RECORDING electrodes with significant effects per patient for each wave
+pct.sig.cceps.per.rec.elec.pt <- list() # compute percent of good cceps for each recording electrode
 for(wave in waveforms){
   
   # unpack mat struct
@@ -56,11 +57,15 @@ for(wave in waveforms){
   #   #scale_fill_manual(values=wes_palettes$BottleRocket1) +
   #   xlab(expression("Spearman\'s"~rho)) + ylab('# of CCEPs') +
   #   theme(text=element_text(size=6))
-  # count number of electrodes with significant effects
   
-  ct.sig.elecs.all.pts <- lapply(p.adj.all.pts,function(X) rowSums(X<0.05,na.rm=T))
-  pct.sig.elecs.per.pt[[wave]] <- sapply(pts, function(pt) 100*sum(ct.sig.elecs.all.pts[[pt]]>0) / sum(rowSums(good.cceps.all.pts[[pt]]) > 0))
-  
+  # count number of significant effects at recording electrodes
+  ct.sig.elecs.all.pts[[wave]] <- lapply(p.adj.all.pts,function(X) rowSums(X<0.05,na.rm=T))
+  # 100 * number of recording electrodes with any significant monotonic trends / number of recording electrodes with any good cceps
+  # i.e. how many recording electrodes with good cceps have this effect at all
+  pct.sig.elecs.per.pt[[wave]] <- sapply(pts, function(pt) 100*sum(ct.sig.elecs.all.pts[[wave]][[pt]]>0) / sum(rowSums(good.cceps.all.pts[[pt]]) > 0))
+  # 100 * number of significant effect at each recording electrode / number of CCEPs at each recording electrode
+  # i.e. for each recording electrode how common is this effect
+  pct.sig.cceps.per.rec.elec.pt[[wave]] <- sapply(pts, function(pt) 100*(ct.sig.elecs.all.pts[[wave]][[pt]] / rowSums(good.cceps.all.pts[[pt]])))
   # store each data frame in a list 
   df.all[[wave]] <- df.plt
   
@@ -68,7 +73,7 @@ for(wave in waveforms){
 
 # compute the prevalence of this effect in each patient, for each wave
 sig.eff.pcts <- lapply(df.all, function(df)
-  sapply(pts, function(pt) 100*mean(df[df$pt==pt,'sig'])))
+  sapply(pts, function(pt) 100*mean(df[df$pt==pt & df$g==1,'sig'])))
 lapply(sig.eff.pcts,summary)
 
 # combine the data frames into one list
@@ -151,6 +156,19 @@ p <- ggplot() +
         legend.key.height = unit(0.01,units='cm'),legend.key.width=unit(1.25,'cm'))
 
 ggsave(plot = p,filename = paste0(savedir,'Fig3a_right.pdf'),width = 4,height=4,units= 'cm',useDingbats=FALSE)
+
+### Fig SX ###
+
+# df.plt <- as.data.frame(pct.sig.cceps.per.rec.elec.pt$N1)
+# X <- lapply(pts, function(pt) data.frame(pt=pt,pct.sig=pct.sig.cceps.per.rec.elec.pt$N1[[pt]]))
+# X <- do.call(rbind,X)
+# df.plt <- data.frame(pct.sig=Reduce('c',pct.sig.cceps.per.rec.elec.pt$N1))
+# 
+# ggplot(df.plt) + geom_histogram(aes(x=pct.sig),fill='pink') + 
+#   xlab('% of CCEPS at Recording Electrode\nWith Significant Monotonic Trend') + 
+#   ylab('# of Recording Electrodes') + theme_bw()+
+#   standard_plot_addon()
+# p
 
 ## Code below has full jitter for the distribution which makes an unwieldy vector graphic
 

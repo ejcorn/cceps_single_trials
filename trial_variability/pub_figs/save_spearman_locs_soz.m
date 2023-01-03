@@ -54,20 +54,22 @@ for pt = locations.subjects
 
     out = ADD_COORDINATES_BIPOLAR(out,coords);
     out.chLabels_ana = anatomic_location(out.chLabels,clinical,1);
+
+    % line up erin's anatomical names with electrode names to match
+    % montage. discrepancy comes from fact that we keep the EKG and EEG
+    % electrodes in our montage but make them nans
     
-    if isempty(out.chLabels_ana)
-        %
-        out.chLabels_ana = coords.info(find(strcmp({coords.info.name},pt))).elecs.anatomy;
-        out.chLabels_ana(isempty_c(out.chLabels_ana)) = {''};
-
-        % keeping this in here
-        out.chLabels_ana = [repmat({'ECG EEG'},[8 1]);out.chLabels_ana];
-
-        if isempty(out.chLabels_ana) | length(out.chLabels) ~= length(out.chLabels_ana)
-            out.chLabels_ana = out.chLabels;       
-        end
+    out.chLabels_ana = repmat({' '},[length(out.chLabels),1]);
+    pt_idx_coords = find(strcmp({coords.info.name},pt)); % index of patient in coords struct    
+    elecs_w_ana_labels = coords.info(pt_idx_coords).elecs.elec_names;
+    elec_ana_labels = coords.info(pt_idx_coords).elecs.anatomy;
+    for elec_idx_coords = 1:length(elecs_w_ana_labels)
+        elec_coords = elecs_w_ana_labels(elec_idx_coords);
+        elec_idx_montage = find(strcmp(out.chLabels,elec_coords));
+        out.chLabels_ana(elec_idx_montage) = elec_ana_labels(elec_idx_coords);
     end
-    %}
+            
+    out.chLabels_ana(isempty_c(out.chLabels_ana)) = {' '};
     
     % get stim timing
     params = get_stim_timing(out);
@@ -78,6 +80,7 @@ for pt = locations.subjects
 
         [spear_trials,spear_trials_p,spear_trials_p_adj] = COMPUTE_SEQ_SPEARMAN(out,results.(wave).data);
         spear_results.(wave).(pt).spear_trials = spear_trials;
+        spear_results.(wave).(pt).spear_trials_p = spear_trials_p;
         spear_results.(wave).(pt).spear_trials_p_adj = spear_trials_p_adj;
         
         fprintf('# significant results %s %s: %d\n',wave,pt,sum(spear_trials_p_adj<0.05,'all'))
@@ -129,11 +132,19 @@ for pt = locations.subjects
     % save wm electrodes
     elec_info.(pt).wm = elec_is_wm;
     
+    % save which channels were stim elecs and which were viable recording elecs
+    elec_info.(pt).stim_chs = ~isempty_c({out.elecs.stim_idx})'; % which channels had any stim regardless of whether any good CCEPs recorded
+    elec_info.(pt).rec_chs = out.response_chs; % all channels except EKG, ECG; performed by get_chs_to_ignore()
+    
+    %% save sampling rate
+    
+    elec_info.(pt).fs = out.other.stim.fs;
+    
     %% save channel labels
     
     elec_info.(pt).chLabels = out.chLabels;
     elec_info.(pt).chLabels_ana = out.chLabels_ana;
-    
+
     %% use brainnetome atlas to identify when electrodes are specifically in GM regions
         
     elec_info.(pt).gm = ~isnan(out.parcellation.elec_parcels.Brainnetome);

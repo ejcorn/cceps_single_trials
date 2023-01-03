@@ -5,10 +5,10 @@
 rm(list=setdiff(ls(),'basedir'))
 
 source(paste0(basedir,'cceps_files.R'))
-source(paste0(basedir,'eli/miscfxns/packages.R'))
-source(paste0(basedir,'eli/miscfxns/miscfxns.R'))
-source(paste0(basedir,'eli/miscfxns/statfxns.R'))
-source(paste0(basedir,'eli/plottingfxns/plottingfxns.R'))
+source(paste0(basedir,'trial_variability/miscfxns/packages.R'))
+source(paste0(basedir,'trial_variability/miscfxns/miscfxns.R'))
+source(paste0(basedir,'trial_variability/miscfxns/statfxns.R'))
+source(paste0(basedir,'trial_variability/plottingfxns/plottingfxns.R'))
 
 # set save directory
 savedir <- paste0(locations$results_folder,'pub_figs/figS1/')

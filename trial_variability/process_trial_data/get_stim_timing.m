@@ -43,4 +43,9 @@ function params = get_stim_timing(out)
     params.temp_n2_idx = params.n2_idx + params.stim_idx - 1;
     params.temp_stim_idx = params.stim_indices_0 + params.stim_idx - 1;
     params.temp_tight_stim = params.tight_stim_indices + params.stim_idx-1;
+        
+    % save indices to extract trial time from -500 to 500 so that you can
+    % concatenate trials without any extra
     
+    params.trial_even_plot_times = [-499e-3 500e-3]; % period to plot when visualizing concatenated trials
+    params.trial_even_plot_idx = params.stim_idx + floor([params.trial_even_plot_times(1)*params.fs : params.trial_even_plot_times(2)*params.fs]);

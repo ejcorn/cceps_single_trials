@@ -166,7 +166,7 @@ for pt = locations.subjects
                     saveas(f,fullfile(savedir_j,[pt,'_PlotTopSpearFeatureVs',wave,'.pdf']));
                     close(f);
                     
-%{                    
+%                    
                     f=figure;
                     [sp1,sp2] = subplot_ind2(n_plot);
 

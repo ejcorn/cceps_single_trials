@@ -21,15 +21,15 @@ p.signif <- function(p,ns='ns'){
   
 }
 
-p.signif.matrix <- function(p){
+p.signif.matrix <- function(p,ns=''){
   # take matrix of p values and make asterisks
   #   ns: p > 0.05
   # *: p <= 0.05
   # **: p <= 0.01
   # ***: p <= 0.001
   # ****: p <= 0.000001
-  p.new <- matrix(data = '',nrow = nrow(p),ncol=ncol(p))
-  p.new[p > 0.05] <- 'ns'
+  p.new <- matrix(data = '',nrow = nrow(p),ncol=ncol(p),dimnames=list(rownames(p),colnames(p)))
+  p.new[p > 0.05] <- ns
   p.new[p < 0.05 & p > 0.01] <- '*'
   p.new[p <= 0.01 & p > 0.001] <- '**'
   p.new[p <= 0.001 & p > 0.000001] <- '***'
@@ -115,6 +115,45 @@ get.partial.resids <- function(m,xname){
   
 }
 
+get.lm.p.vals <- function(m){
+  x <- rep(NA,length(coefficients(m)))
+  names(x) <- names(coefficients(m))
+  coefs.nonna <- summary(m)$coef[,'Pr(>|t|)']
+  x[names(coefs.nonna)] <- coefs.nonna
+  return(x)
+}
+
+get.lm.std.betas <- function(m){
+  x <- rep(NA,length(coefficients(m)))
+  names(x) <- names(coefficients(m))
+  coefs.nonna <- summary(m)$coef[,'Standardized']
+  x[names(coefs.nonna)] <- coefs.nonna
+  return(x)
+}
+
+get.lm.betas <- function(m){
+  x <- rep(NA,length(coefficients(m)))
+  names(x) <- names(coefficients(m))
+  coefs.nonna <- summary(m)$coef[,'Estimate']
+  x[names(coefs.nonna)] <- coefs.nonna
+  return(x)
+}
+
+get.beta.OR.95ci <- function(m,cname,coef.type='Estimate'){
+  ci <- sprintf('%.2f',round(exp(suppressMessages(confint(m,cname))),2))
+  b <- sprintf('%.2f',round(exp(summary(m)$coef[cname,coef.type]),2))
+  or.txt <- paste0(b,' (',ci[1],'-',ci[2],')')
+  return(or.txt)
+}
+
+get.coef.pval <- function(m,cname){
+  return(summary(m)$coef[cname,'Pr(>|t|)'])
+}
+
+get.model.rsq <- function(m){
+  return(summary(m)$r.squared)
+}
+
 get.partial.resids <- function(m,xname){
   # INPUTS:
   # m: lm object
@@ -145,6 +184,109 @@ get.partial.resids.factor <- function(m,xname,xnamelevel){
   return(df)
   
 }
+
+#################################################
+### define functions to make regression table ###
+#################################################
+
+format.coefs <- function(x,sci=TRUE){
+  x.na <- !is.na(x)
+  x[x.na] <- signif(x[x.na],2)
+  sci.mask <- abs(log(abs(x[x.na]),base=10))>2
+  if(any(sci.mask)){
+    x[x.na][sci.mask] <- sapply(x[x.na][sci.mask], function(y) format(y, scientific = sci))
+  }
+  return(x)
+}
+
+assemble.reg.tab <- function(m,dep.var,pt,wave,p.adj.matrix){
+  
+  # nice names for model coefficient variables
+  var.names <- c('(Intercept)','Distance','Gray Matter (Stim)','Gray Matter (Record)','Somatosensory (Stim)','Somatosensory (Record)',
+                 'Motor (Stim)','Motor (Record)','Visual (Stim)','Visual (Record)','Electrode In SOZ')
+  
+  # get coefficient table from lm summary object and format it in scientific/sig fig notation
+  m.coefs <- coefficients(m)
+  coef.tab.nonna <- summary(m)$coef
+  coef.tab <- matrix(NA,nrow=length(m.coefs),ncol=ncol(coef.tab.nonna),dimnames=list(names(m.coefs),colnames(coef.tab.nonna)))
+  coef.tab[rownames(coef.tab.nonna),] <- coef.tab.nonna
+  coef.tab <- cbind(coef.tab,p.adj.matrix[,pt])
+  coef.tab <- format.coefs(coef.tab)
+  
+  
+  # add lines above for headers
+  reg.tab <- rbind('','','',coef.tab,'','')
+  
+  # add clean headers for names of statistical parameters
+  reg.tab[3,] <- c('Beta','Std. Error','t value','p value','p value (FDR)')
+  
+  # add f stat info
+  f.stat.lines <- capture.output(print(summary(m)))
+  reg.tab[nrow(reg.tab),1] <- f.stat.lines[grep('F-statistic',f.stat.lines)]
+  
+  # add clean variable names 
+  reg.tab <- cbind('',reg.tab)
+  #print(reg.tab)
+  reg.tab[,1] <- c('','','',var.names,'','')
+  
+  # add headers
+  reg.tab[1,1] <- paste0('Patient: ',pt)
+  reg.tab[1,2] <- paste0('Wave: ',wave)
+  reg.tab[1,3] <- paste0('Dependent Variable: ',dep.var)
+  
+  # remove row names
+  rownames(reg.tab) <- NULL
+  colnames(reg.tab) <- NULL
+  return(reg.tab)
+}
+
+assemble.reg.tab.5fgh <- function(m,indep.var,pt,wave,p.adj.matrix,stim.rec){
+  
+  # m: model lm object
+  # indep.var: independent variable of interest for model
+  # pt: patient
+  # p.adj.matrix. fdr corrected p vals for model
+  # stim.rec: whether you are predicting spikes at stim electrode or recording electrode
+  
+  # nice names for model coefficient variables
+  var.names <- c('(Intercept)','Distance','Gray Matter (Stim)','Gray Matter (Record)','Somatosensory (Stim)','Somatosensory (Record)',
+                 'Motor (Stim)','Motor (Record)','Visual (Stim)','Visual (Record)',indep.var)
+  
+  # get coefficient table from lm summary object and format it in scientific/sig fig notation
+  m.coefs <- coefficients(m)
+  coef.tab.nonna <- summary(m)$coef
+  coef.tab <- matrix(NA,nrow=length(m.coefs),ncol=ncol(coef.tab.nonna),dimnames=list(names(m.coefs),colnames(coef.tab.nonna)))
+  coef.tab[rownames(coef.tab.nonna),] <- coef.tab.nonna
+  coef.tab <- cbind(coef.tab,p.adj.matrix[,pt])
+  coef.tab <- format.coefs(coef.tab)
+  
+  
+  # add lines above for headers
+  reg.tab <- rbind('','','',coef.tab,'','')
+  
+  # add clean headers for names of statistical parameters
+  reg.tab[3,] <- c('Beta','Std. Error','t value','p value','p value (FDR)')
+  
+  # add f stat info
+  f.stat.lines <- capture.output(print(summary(m)))
+  reg.tab[nrow(reg.tab),1] <- f.stat.lines[grep('F-statistic',f.stat.lines)]
+  
+  # add clean variable names 
+  reg.tab <- cbind('',reg.tab)
+  #print(reg.tab)
+  reg.tab[,1] <- c('','','',var.names,'','')
+  
+  # add headers
+  reg.tab[1,1] <- paste0('Patient: ',pt)
+  reg.tab[1,2] <- paste0('Wave: ',wave)
+  reg.tab[1,3] <- paste0('Dependent Variable: Spikes (',stim.rec,')')
+  
+  # remove row names
+  rownames(reg.tab) <- NULL
+  colnames(reg.tab) <- NULL
+  return(reg.tab)
+}
+
 #########################################################
 ### Permutation testing for CCEP electrode categories ###
 #########################################################
@@ -227,6 +369,23 @@ meanboot <- function(data, i){
 medianboot <- function(data, i){
   d <- data[i]
   return(median(d))   
+}
+
+boot.auc.df <- function(df,f,nboot=500){
+  # bootstrap data frame
+  n <- nrow(df)
+  df.boot <- lapply(1:nboot,function(b) df[sample(1:n,replace = T),])
+  #df.boot <- clean.df(df.boot,response=all.vars(f)[1])
+  #<- lapply(df.boot,clean.df)
+  # fit model specified on formula f on each bootstrap of data frame
+  m.boot <- lapply(df.boot,function(X) glm(f,data=X))
+  # compute ROC curve for each bootstrapped model
+  m.roc <- quiet(lapply(m.boot, function(m)
+    roc(response=m$data$soz.non.sz.binary,predictor = predict(m,m$data,type='response'))))
+  # get AUC of each ROC curve
+  m.auc <- sapply(m.roc,function(x) x$auc)
+  # return 95% CI and mean of AUC
+  return(quantile(m.auc,probs =c(0.025,0.5,0.975)))
 }
 
 ############################

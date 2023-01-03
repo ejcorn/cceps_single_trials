@@ -22,7 +22,10 @@ function [rho pval] = circ_corrcl_pairwise(alpha, x)
 % By Philipp Berens, 2009
 % berens@tuebingen.mpg.de - www.kyb.mpg.de/~berens/circStat.html
 
-% MODIFIED 5/28/22 to add pairwise rows argument
+% MODIFIED 5/28/22 to ensure only rows that are not nan for both x and
+% alpha are included - otherwise using the 'pairwise' rows argument leads
+% to inaccurate computation relying on different observations for rxs/rxc
+% vs. rcs (lines 51-53 below)
 
 
 if size(alpha,2) > size(alpha,1)
@@ -39,10 +42,15 @@ end
 
 n = length(alpha);
 
+% added by EJC - 
+mask = ~isnan(alpha) & ~isnan(x);
+x = x(mask);
+alpha = alpha(mask);
+
 % compute correlation coefficent for sin and cos independently
-rxs = corr(x,sin(alpha),'rows','pairwise');
-rxc = corr(x,cos(alpha),'rows','pairwise');
-rcs = corr(sin(alpha),cos(alpha),'rows','pairwise');
+rxs = corr(x,sin(alpha));
+rxc = corr(x,cos(alpha));
+rcs = corr(sin(alpha),cos(alpha));
 
 % compute angular-linear correlation (equ. 27.47)
 rho = sqrt((rxc^2 + rxs^2 - 2*rxc*rxs*rcs)/(1-rcs^2));

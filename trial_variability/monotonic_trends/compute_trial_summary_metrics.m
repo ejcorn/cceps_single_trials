@@ -49,7 +49,8 @@ for pt = locations.subjects
         @(x) find_peak_fit(x,params,params.prestim_ctrl);    
     
     % same as above but make it NaN if no peak identified
-    
+    % *** this is the final one
+        
     results.('N1').function_fit_nan = ...
         @(x) find_peak_fit(x,params,params.n1_time,nan);
     results.('N2').function_fit_nan = ...
@@ -58,7 +59,6 @@ for pt = locations.subjects
         @(x) find_peak_fit(x,params,params.prestim_ctrl,nan); 
     
     % use peak finding algorithm that counts both local minima and maxima
-    % *** this is the final one
     
     results.('N1').function_minmax_nan = ...
         @(x) find_peak_minmax(x,params,params.n1_time,nan);

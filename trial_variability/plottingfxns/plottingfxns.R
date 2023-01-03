@@ -5,6 +5,10 @@ standard_plot_addon <- function(){
   
 }
 
+x_text_90 <- function(){
+  theme(axis.text.x = element_text(angle=90,vjust = 0.5))
+}
+
 colorvis <- function(COL){
   plot(NULL, xlim=c(0,length(COL)), ylim=c(0,1), 
        xlab="", ylab="", xaxt="n", yaxt="n")
@@ -125,7 +129,8 @@ p.xy.flex <- function(x,y,xlab,ylab,ttl='',col='black',alpha=1,r.method='pearson
 }
 
 imagesc <- function(X,caxis_name='',cmap='plasma',caxis_labels=NULL,clim=c(min(X,na.rm=T),max(X,na.rm=T)),
-  xlabel='',ylabel='',yticklabels=rownames(X),xticklabels=as.character(colnames(X)),ttl='',noticks=FALSE,overlay = NULL,overlay.text.col='black',overlay.text.sz=2.5){
+  xlabel='',ylabel='',yticklabels=rownames(X),xticklabels=as.character(colnames(X)),ttl='',noticks=FALSE,overlay = NULL,
+  overlay.text.col='black',overlay.text.sz=2.5,overlay.text.angle=0,overlay.text.vjust = 0.5){
   # INPUTS:
   # X: matrix with dim names
   # cmap: name of colormap, for R colorbrewer
@@ -177,6 +182,11 @@ imagesc <- function(X,caxis_name='',cmap='plasma',caxis_labels=NULL,clim=c(min(X
                            values = scales::rescale(c(clim[1],0,clim[2])),
                            guide = "colorbar", limits=clim,breaks=caxis_breaks,
                            na.value = 'white',name=caxis_name)
+   } else if(cmap == 'redblue_asymmetric_nagrey'){
+      p <- p + scale_fill_gradientn(colours = c('#8B0000','#c23b22','#ffffff','#779ecb','#00008b'),
+                                    values = scales::rescale(c(clim[1],0,clim[2])),
+                                    guide = "colorbar", limits=clim,breaks=caxis_breaks,
+                                    na.value = 'grey',name=caxis_name)
   } else {
     pal.idx <- which(rownames(brewer.pal.info) == cmap)  
     cols <- brewer.pal(brewer.pal.info$maxcolors[pal.idx], cmap)
@@ -191,7 +201,8 @@ imagesc <- function(X,caxis_name='',cmap='plasma',caxis_labels=NULL,clim=c(min(X
   if(!is.null(overlay)){
     melt_ov_mat <- melt(t(overlay))
     melt_ov_mat$Var1 <- as.character(melt_ov_mat$Var1)
-    p <- p + geom_text(data = melt_ov_mat, aes(x=Var1, y=Var2, label=value),size=overlay.text.sz,color=overlay.text.col)
+    p <- p + geom_text(data = melt_ov_mat, aes(x=Var1, y=Var2, label=value),
+                       size=overlay.text.sz,color=overlay.text.col,angle=overlay.text.angle,vjust = overlay.text.vjust)
   }
   return(p)
 

@@ -181,7 +181,7 @@ for pt = locations.subjects
                     saveas(f,fullfile(savedir_j,[pt,'_PlotTopCLcorr',out.chLabels{feat_elec},'FeatureVs',wave,'.pdf']));
                     close(f);
                     
-%{                    
+%                
                     f=figure;
                     [sp1,sp2] = subplot_ind2(n_plot);
 
